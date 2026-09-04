@@ -1,0 +1,40 @@
+Build a web app called BenchBoard — a focused tool for small consulting/staffing firms (10-50 consultants) to track consultant availability and get AI-assisted matching for client job requirements. This is an MVP, so keep scope tight: only the two features below, built well, rather than a broad feature set.
+
+ENVIRONMENT
+- This will run on Replit. Use Replit's built-in PostgreSQL database integration (do not set up an external database provider).
+- Use Replit Secrets for all environment variables (database credentials, API keys) — do not create a .env file with real values, and make sure nothing sensitive gets hardcoded anywhere in the source.
+
+TECH STACK
+- Frontend: React + TypeScript, Vite, Tailwind CSS
+- Backend: Node.js + Express, TypeScript
+- Database: PostgreSQL via Replit's built-in database, accessed with Drizzle ORM
+- Validation: Zod schemas shared between frontend and backend
+- AI: Groq API (OpenAI-compatible endpoint) using a Llama 3 model (e.g. llama-3.1-70b-versatile or the latest recommended Groq model) for the matching feature — I will add the GROQ_API_KEY to Replit Secrets myself
+
+CORE FEATURE 1 — Availability Dashboard
+- A table/grid view of all consultants in the roster
+- Each consultant has: name, title, skills (array), hourly rate, and an availability status (available / deployed / unavailable)
+- If deployed, show which project and the end date
+- Visually highlight consultants whose engagement ends within the next 14 days (e.g. amber/warning color) so managers get advance notice
+- Simple CRUD: add a consultant, edit their details, mark them available/deployed/unavailable
+
+CORE FEATURE 2 — AI-Assisted Matching
+- A text area where a manager pastes a job description / requirements
+- On submit, this should run as a multi-step process (not a single prompt):
+  1. Extract structured requirements from the pasted text (skills needed, seniority level, domain)
+  2. Compare those requirements against the consultant roster in the database (retrieve the most relevant candidates based on skill/domain overlap)
+  3. Rank the top 3-5 matches and generate a short, specific, plain-language reason for each match, grounded in that consultant's actual profile data — not generic text
+- Display the ranked shortlist with each consultant's name, key matching skills, and the reason for the match
+- Use the Groq SDK (or a plain fetch call to Groq's OpenAI-compatible /chat/completions endpoint) for each step of this process
+
+QUALITY REQUIREMENTS (apply these from the start, not as an afterthought)
+- Add a React error boundary wrapping the main app so a crash in one component doesn't blank the whole page — show a friendly fallback message instead
+- Every delete action must show a confirmation dialog before proceeding — no exceptions
+- Show a proper empty state (friendly message + call to action) anywhere a list could be empty — never show a bare "0" or blank table with no context
+- Debounce any search/filter inputs (wait ~300ms after typing stops before firing a request)
+- All user-facing text must be written in plain, friendly language — never expose internal config names, error codes, or developer-facing messages to the user
+- Add loading states (skeletons) for anything fetching data
+- Make the layout responsive down to tablet width at minimum
+
+PROJECT STRUCTURE
+Set this up as a clean, organized project with a clear client/server separation. Start by scaffolding the project structure and the database schema (two tables: consultants, and a simple projects/engagements table to track what each consultant is deployed to). Show me the schema before writing any UI code, so I can confirm it before you proceed.
