@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface DashboardSummary {
+  totalConsultants: number;
+  available: number;
+  deployed: number;
+  unavailable: number;
+  endingSoon: number;
 }

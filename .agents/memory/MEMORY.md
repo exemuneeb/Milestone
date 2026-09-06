@@ -1,0 +1,1 @@
+- [Groq model access](groq-model-access.md) — model IDs can be key-specific; verify a live supported model before relying on public docs.

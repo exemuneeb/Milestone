@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface MatchRequirements {
+  skills: string[];
+  /** @nullable */
+  seniority: string | null;
+  /** @nullable */
+  domain: string | null;
 }

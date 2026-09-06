@@ -5,7 +5,9 @@
  * BenchBoard consultant availability and matching API
  * OpenAPI spec version: 0.1.0
  */
+import type { AvailabilityStatus } from './availabilityStatus';
 
-export interface HealthStatus {
-  status: string;
-}
+export type ListConsultantsParams = {
+search?: string;
+status?: AvailabilityStatus;
+};

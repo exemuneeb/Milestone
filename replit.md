@@ -1,6 +1,6 @@
-# [Project name]
+# BenchBoard
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+BenchBoard helps small consulting and staffing firms track consultant availability and match their bench to new client briefs.
 
 ## Run & Operate
 
@@ -22,23 +22,33 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/benchboard` — React + Vite dashboard and AI match studio.
+- `artifacts/api-server` — Express routes for roster CRUD, dashboard summaries, and Groq matching.
+- `lib/db/src/schema` — Drizzle source of truth for consultants and engagements.
+- `lib/api-spec/openapi.yaml` — OpenAPI source of truth for generated client and Zod contracts.
+- `artifacts/benchboard/src/index.css` — BenchBoard visual tokens and shared UI styles.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Consultant availability and the current engagement are exposed as one UI model, while persistence stays normalized across two tables.
+- The matching flow uses Groq for requirement extraction and explanation, with a local roster comparison step between them.
+- Deployed status requires engagement context; status changes without an engagement open the edit flow instead of failing silently.
+- The API seeds a small roster on first access so the MVP is useful immediately without hardcoded frontend data.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Availability dashboard with roster search, status filtering, 14-day engagement alerts, and consultant CRUD.
+- AI match studio that extracts skills, seniority, and domain from a role brief, compares the live roster, and returns a ranked shortlist with grounded reasons.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the MVP focused on availability tracking and AI-assisted matching.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run API codegen after changing `lib/api-spec/openapi.yaml`.
+- The AI route requires the `GROQ_API_KEY` Replit Secret.
+- Vite builds require workflow-provided `PORT` and `BASE_PATH`; use the managed workflow or provide both for manual builds.
 
 ## Pointers
 
