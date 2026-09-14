@@ -30,6 +30,7 @@ export interface Consultant {
   name: string;
   title: string;
   skills: string[];
+  serviceOffers: string[];
   hourlyRate: number;
   availabilityStatus: AvailabilityStatus;
   /** @nullable */
@@ -45,6 +46,7 @@ export interface ConsultantInput {
   title: string;
   /** @minItems 1 */
   skills: string[];
+  serviceOffers?: string[];
   /** @minimum 0 */
   hourlyRate: number;
   availabilityStatus: AvailabilityStatus;
@@ -63,6 +65,7 @@ export interface ConsultantUpdate {
   title?: string;
   /** @minItems 1 */
   skills?: string[];
+  serviceOffers?: string[];
   /** @minimum 0 */
   hourlyRate?: number;
   availabilityStatus?: AvailabilityStatus;
@@ -72,6 +75,95 @@ export interface ConsultantUpdate {
   engagementStartDate?: string | null;
   /** @nullable */
   engagementEndDate?: string | null;
+}
+
+export interface Client {
+  id: number;
+  name: string;
+  company: string;
+  industry: string;
+  bio: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClientInput {
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  company: string;
+  /** @minLength 1 */
+  industry: string;
+  bio?: string;
+}
+
+export interface ClientUpdate {
+  /** @minLength 1 */
+  name?: string;
+  /** @minLength 1 */
+  company?: string;
+  /** @minLength 1 */
+  industry?: string;
+  bio?: string;
+}
+
+export type ProjectStatus = typeof ProjectStatus[keyof typeof ProjectStatus];
+
+
+export const ProjectStatus = {
+  planning: 'planning',
+  active: 'active',
+  paused: 'paused',
+  completed: 'completed',
+} as const;
+
+export interface Project {
+  id: number;
+  clientId: number;
+  name: string;
+  description: string;
+  skills: string[];
+  status: ProjectStatus;
+  /** @nullable */
+  budget: number | null;
+  /** @nullable */
+  startDate: string | null;
+  /** @nullable */
+  endDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectInput {
+  clientId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 20 */
+  description: string;
+  skills: string[];
+  status: ProjectStatus;
+  /** @nullable */
+  budget?: number | null;
+  /** @nullable */
+  startDate?: string | null;
+  /** @nullable */
+  endDate?: string | null;
+}
+
+export interface ProjectUpdate {
+  /** @minLength 1 */
+  name?: string;
+  /** @minLength 20 */
+  description?: string;
+  skills?: string[];
+  status?: ProjectStatus;
+  /** @nullable */
+  budget?: number | null;
+  /** @nullable */
+  startDate?: string | null;
+  /** @nullable */
+  endDate?: string | null;
 }
 
 export interface DashboardSummary {
@@ -115,5 +207,9 @@ export interface ErrorResponse {
 export type ListConsultantsParams = {
 search?: string;
 status?: AvailabilityStatus;
+};
+
+export type ListProjectsParams = {
+clientId: number;
 };
 

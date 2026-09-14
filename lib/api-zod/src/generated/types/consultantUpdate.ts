@@ -14,6 +14,7 @@ export interface ConsultantUpdate {
   title?: string;
   /** @minItems 1 */
   skills?: string[];
+  serviceOffers?: string[];
   /** @minimum 0 */
   hourlyRate?: number;
   availabilityStatus?: AvailabilityStatus;

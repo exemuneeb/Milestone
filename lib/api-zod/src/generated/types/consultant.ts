@@ -13,6 +13,7 @@ export interface Consultant {
   name: string;
   title: string;
   skills: string[];
+  serviceOffers: string[];
   hourlyRate: number;
   availabilityStatus: AvailabilityStatus;
   /** @nullable */

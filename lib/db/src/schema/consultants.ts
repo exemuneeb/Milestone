@@ -13,6 +13,7 @@ export const consultantsTable = pgTable("consultants", {
   name: text("name").notNull(),
   title: text("title").notNull(),
   skills: text("skills").array().notNull().default([]),
+  serviceOffers: text("service_offers").array().notNull().default([]),
   hourlyRate: numeric("hourly_rate", { precision: 10, scale: 2, mode: "number" })
     .notNull(),
   availabilityStatus: availabilityStatusEnum("availability_status")

@@ -31,6 +31,7 @@ export const ListConsultantsResponseItem = zod.object({
   "name": zod.string(),
   "title": zod.string(),
   "skills": zod.array(zod.string()),
+  "serviceOffers": zod.array(zod.string()),
   "hourlyRate": zod.number(),
   "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']),
   "engagement": zod.object({
@@ -59,6 +60,7 @@ export const CreateConsultantBody = zod.object({
   "name": zod.string().min(1),
   "title": zod.string().min(1),
   "skills": zod.array(zod.string()).min(1),
+  "serviceOffers": zod.array(zod.string()).optional(),
   "hourlyRate": zod.number().min(createConsultantBodyHourlyRateMin),
   "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']),
   "projectName": zod.string().nullish(),
@@ -71,6 +73,7 @@ export const CreateConsultantResponse = zod.object({
   "name": zod.string(),
   "title": zod.string(),
   "skills": zod.array(zod.string()),
+  "serviceOffers": zod.array(zod.string()),
   "hourlyRate": zod.number(),
   "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']),
   "engagement": zod.object({
@@ -102,6 +105,7 @@ export const UpdateConsultantBody = zod.object({
   "name": zod.string().min(1).optional(),
   "title": zod.string().min(1).optional(),
   "skills": zod.array(zod.string()).min(1).optional(),
+  "serviceOffers": zod.array(zod.string()).optional(),
   "hourlyRate": zod.number().min(updateConsultantBodyHourlyRateMin).optional(),
   "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']).optional(),
   "projectName": zod.string().nullish(),
@@ -114,6 +118,7 @@ export const UpdateConsultantResponse = zod.object({
   "name": zod.string(),
   "title": zod.string(),
   "skills": zod.array(zod.string()),
+  "serviceOffers": zod.array(zod.string()),
   "hourlyRate": zod.number(),
   "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']),
   "engagement": zod.object({
@@ -135,6 +140,185 @@ export const DeleteConsultantParams = zod.object({
 })
 
 export const DeleteConsultantResponse = zod.void()
+
+
+/**
+ * Returns client profiles ordered by rating.
+ * @summary List clients
+ */
+export const ListClientsResponseItem = zod.object({
+  "id": zod.int(),
+  "name": zod.string(),
+  "company": zod.string(),
+  "industry": zod.string(),
+  "bio": zod.string(),
+  "rating": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListClientsResponse = zod.array(ListClientsResponseItem)
+
+
+/**
+ * @summary Create a client profile
+ */
+
+
+
+
+
+export const CreateClientBody = zod.object({
+  "name": zod.string().min(1),
+  "company": zod.string().min(1),
+  "industry": zod.string().min(1),
+  "bio": zod.string().optional()
+})
+
+export const CreateClientResponse = zod.object({
+  "id": zod.int(),
+  "name": zod.string(),
+  "company": zod.string(),
+  "industry": zod.string(),
+  "bio": zod.string(),
+  "rating": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a client profile
+ */
+export const UpdateClientParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+
+
+
+
+
+export const UpdateClientBody = zod.object({
+  "name": zod.string().min(1).optional(),
+  "company": zod.string().min(1).optional(),
+  "industry": zod.string().min(1).optional(),
+  "bio": zod.string().optional()
+})
+
+export const UpdateClientResponse = zod.object({
+  "id": zod.int(),
+  "name": zod.string(),
+  "company": zod.string(),
+  "industry": zod.string(),
+  "bio": zod.string(),
+  "rating": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List client projects
+ */
+export const ListProjectsQueryParams = zod.object({
+  "clientId": zod.coerce.number().int()
+})
+
+export const ListProjectsResponseItem = zod.object({
+  "id": zod.int(),
+  "clientId": zod.int(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "skills": zod.array(zod.string()),
+  "status": zod.enum(['planning', 'active', 'paused', 'completed']),
+  "budget": zod.number().nullable(),
+  "startDate": zod.coerce.date().nullable(),
+  "endDate": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
+
+
+/**
+ * @summary Create a client project
+ */
+
+export const createProjectBodyDescriptionMin = 20;
+
+
+
+export const CreateProjectBody = zod.object({
+  "clientId": zod.int(),
+  "name": zod.string().min(1),
+  "description": zod.string().min(createProjectBodyDescriptionMin),
+  "skills": zod.array(zod.string()),
+  "status": zod.enum(['planning', 'active', 'paused', 'completed']),
+  "budget": zod.number().nullish(),
+  "startDate": zod.coerce.date().nullish(),
+  "endDate": zod.coerce.date().nullish()
+})
+
+export const CreateProjectResponse = zod.object({
+  "id": zod.int(),
+  "clientId": zod.int(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "skills": zod.array(zod.string()),
+  "status": zod.enum(['planning', 'active', 'paused', 'completed']),
+  "budget": zod.number().nullable(),
+  "startDate": zod.coerce.date().nullable(),
+  "endDate": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a client project
+ */
+export const UpdateProjectParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+
+export const updateProjectBodyDescriptionMin = 20;
+
+
+
+export const UpdateProjectBody = zod.object({
+  "name": zod.string().min(1).optional(),
+  "description": zod.string().min(updateProjectBodyDescriptionMin).optional(),
+  "skills": zod.array(zod.string()).optional(),
+  "status": zod.enum(['planning', 'active', 'paused', 'completed']).optional(),
+  "budget": zod.number().nullish(),
+  "startDate": zod.coerce.date().nullish(),
+  "endDate": zod.coerce.date().nullish()
+})
+
+export const UpdateProjectResponse = zod.object({
+  "id": zod.int(),
+  "clientId": zod.int(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "skills": zod.array(zod.string()),
+  "status": zod.enum(['planning', 'active', 'paused', 'completed']),
+  "budget": zod.number().nullable(),
+  "startDate": zod.coerce.date().nullable(),
+  "endDate": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a client project
+ */
+export const DeleteProjectParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteProjectResponse = zod.void()
 
 
 /**
@@ -175,6 +359,7 @@ export const MatchConsultantsResponse = zod.object({
   "name": zod.string(),
   "title": zod.string(),
   "skills": zod.array(zod.string()),
+  "serviceOffers": zod.array(zod.string()),
   "hourlyRate": zod.number(),
   "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']),
   "engagement": zod.object({

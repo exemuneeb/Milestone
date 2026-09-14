@@ -7,6 +7,7 @@ type FormValue = {
   name: string;
   title: string;
   skills: string;
+  serviceOffers: string;
   hourlyRate: string;
   availabilityStatus: AvailabilityStatus;
   projectName: string;
@@ -26,6 +27,7 @@ const blankForm: FormValue = {
   name: '',
   title: '',
   skills: '',
+  serviceOffers: '',
   hourlyRate: '',
   availabilityStatus: 'available',
   projectName: '',
@@ -44,6 +46,7 @@ export function ConsultantForm({ open, consultant, pending, onClose, onSubmit }:
         name: consultant.name,
         title: consultant.title,
         skills: consultant.skills.join(', '),
+        serviceOffers: consultant.serviceOffers.join(', '),
         hourlyRate: String(consultant.hourlyRate),
         availabilityStatus: consultant.availabilityStatus,
         projectName: consultant.engagement?.projectName ?? '',
@@ -70,6 +73,7 @@ export function ConsultantForm({ open, consultant, pending, onClose, onSubmit }:
       name: form.name.trim(),
       title: form.title.trim(),
       skills,
+      serviceOffers: form.serviceOffers.split(',').map((service) => service.trim()).filter(Boolean),
       hourlyRate: Number(form.hourlyRate),
       availabilityStatus: form.availabilityStatus,
       projectName: form.projectName.trim() || null,
@@ -96,6 +100,7 @@ export function ConsultantForm({ open, consultant, pending, onClose, onSubmit }:
             <label><span className="field-label">Availability</span><select data-testid="select-consultant-status" value={form.availabilityStatus} onChange={(event) => set('availabilityStatus', event.target.value)} className="field-input"><option value="available">Available</option><option value="deployed">Deployed</option><option value="unavailable">Unavailable</option></select></label>
           </div>
           <label><span className="field-label">Skills <span className="font-normal normal-case tracking-normal text-muted-foreground">comma separated</span></span><input data-testid="input-consultant-skills" value={form.skills} onChange={(event) => set('skills', event.target.value)} className="field-input" placeholder="Research, Go-to-market, SaaS" /></label>
+          <label><span className="field-label">Services you offer <span className="font-normal normal-case tracking-normal text-muted-foreground">comma separated</span></span><input data-testid="input-consultant-services" value={form.serviceOffers} onChange={(event) => set('serviceOffers', event.target.value)} className="field-input" placeholder="Strategy, Discovery, Workshop facilitation" /></label>
           <div className="rounded-xl border border-border bg-secondary/40 p-4">
             <div className="mb-3 text-xs font-semibold text-foreground">Engagement context <span className="font-normal text-muted-foreground">optional</span></div>
             <div className="space-y-3">

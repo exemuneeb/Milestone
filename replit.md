@@ -22,15 +22,17 @@ BenchBoard helps small consulting and staffing firms track consultant availabili
 
 ## Where things live
 
-- `artifacts/benchboard` — React + Vite dashboard and AI match studio.
+- `artifacts/benchboard` — React + Vite consultant portal, client portal, availability dashboard, and AI match studio.
 - `artifacts/api-server` — Express routes for roster CRUD, dashboard summaries, and Groq matching.
-- `lib/db/src/schema` — Drizzle source of truth for consultants and engagements.
+- `lib/db/src/schema` — Drizzle source of truth for consultants, engagements, clients, and client-owned projects.
 - `lib/api-spec/openapi.yaml` — OpenAPI source of truth for generated client and Zod contracts.
 - `artifacts/benchboard/src/index.css` — BenchBoard visual tokens and shared UI styles.
 
 ## Architecture decisions
 
 - Consultant availability and the current engagement are exposed as one UI model, while persistence stays normalized across two tables.
+- Consultant and client portals are separate routes without authentication in the MVP; each portal uses a selected seeded profile until account ownership is added.
+- Client projects are the source briefs for AI consultant search, while consultant service offers are stored separately from core skills.
 - The matching flow uses Groq for requirement extraction and explanation, with a local roster comparison step between them.
 - Deployed status requires engagement context; status changes without an engagement open the edit flow instead of failing silently.
 - The API seeds a small roster on first access so the MVP is useful immediately without hardcoded frontend data.
@@ -38,6 +40,8 @@ BenchBoard helps small consulting and staffing firms track consultant availabili
 ## Product
 
 - Availability dashboard with roster search, status filtering, 14-day engagement alerts, and consultant CRUD.
+- Consultant portal for profile details, service offers, ongoing projects, and top-rated clients.
+- Client portal for client profiles, project CRUD, and AI consultant search from saved or new project briefs.
 - AI match studio that extracts skills, seniority, and domain from a role brief, compares the live roster, and returns a ranked shortlist with grounded reasons.
 
 ## User preferences

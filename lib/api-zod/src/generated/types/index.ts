@@ -7,6 +7,9 @@
  */
 
 export * from './availabilityStatus';
+export * from './client';
+export * from './clientInput';
+export * from './clientUpdate';
 export * from './consultant';
 export * from './consultantInput';
 export * from './consultantMatch';
@@ -16,6 +19,11 @@ export * from './engagement';
 export * from './errorResponse';
 export * from './healthStatus';
 export * from './listConsultantsParams';
+export * from './listProjectsParams';
 export * from './matchInput';
 export * from './matchRequirements';
 export * from './matchResponse';
+export * from './project';
+export * from './projectInput';
+export * from './projectStatus';
+export * from './projectUpdate';
