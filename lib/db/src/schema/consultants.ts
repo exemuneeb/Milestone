@@ -10,6 +10,7 @@ export const availabilityStatusEnum = pgEnum("availability_status", [
 
 export const consultantsTable = pgTable("consultants", {
   id: serial("id").primaryKey(),
+  ownerId: text("owner_id"),
   name: text("name").notNull(),
   title: text("title").notNull(),
   skills: text("skills").array().notNull().default([]),

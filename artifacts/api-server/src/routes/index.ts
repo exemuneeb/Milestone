@@ -5,6 +5,8 @@ import dashboardRouter from "./dashboard";
 import matchingRouter from "./matching";
 import clientsRouter from "./clients";
 import projectsRouter from "./projects";
+import meRouter from "./me";
+import demoRouter from "./demo";
 
 const router: IRouter = Router();
 
@@ -14,5 +16,7 @@ router.use(dashboardRouter);
 router.use(matchingRouter);
 router.use(clientsRouter);
 router.use(projectsRouter);
+router.use(meRouter);
+router.use(demoRouter);
 
 export default router;

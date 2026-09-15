@@ -26,13 +26,18 @@ import type {
   Consultant,
   ConsultantInput,
   ConsultantUpdate,
+  CurrentProfile,
   DashboardSummary,
+  DemoAccounts,
   ErrorResponse,
   HealthStatus,
+  HireInput,
+  HireResponse,
   ListConsultantsParams,
   ListProjectsParams,
   MatchInput,
   MatchResponse,
+  ProfileSetupInput,
   Project,
   ProjectInput,
   ProjectUpdate
@@ -131,6 +136,231 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCurrentProfileUrl = () => {
+
+
+
+
+  return `/api/me`
+}
+
+/**
+ * @summary Get the signed-in user's workspace profile
+ */
+export const getCurrentProfile = async ( options?: Parameters<typeof customFetch>[1]): Promise<CurrentProfile> => {
+
+  return customFetch<CurrentProfile>(getGetCurrentProfileUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentProfileQueryKey = () => {
+    return [
+    `/api/me`
+    ] as const;
+    }
+
+
+export const getGetCurrentProfileQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentProfile>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentProfileQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentProfile>>> = ({ signal }) => getCurrentProfile({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentProfile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentProfile>>>
+export type GetCurrentProfileQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get the signed-in user's workspace profile
+ */
+
+export function useGetCurrentProfile<TData = Awaited<ReturnType<typeof getCurrentProfile>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateCurrentProfileUrl = () => {
+
+
+
+
+  return `/api/me/role`
+}
+
+/**
+ * @summary Create the signed-in user's consultant or client profile
+ */
+export const createCurrentProfile = async (profileSetupInput: ProfileSetupInput, options?: Parameters<typeof customFetch>[1]): Promise<CurrentProfile> => {
+
+  return customFetch<CurrentProfile>(getCreateCurrentProfileUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(profileSetupInput)
+  }
+);}
+
+
+
+
+
+export const getCreateCurrentProfileMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCurrentProfile>>, TError,{data: BodyType<ProfileSetupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCurrentProfile>>, TError,{data: BodyType<ProfileSetupInput>}, TContext> => {
+
+const mutationKey = ['createCurrentProfile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCurrentProfile>>, {data: BodyType<ProfileSetupInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCurrentProfile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCurrentProfileMutationResult = NonNullable<Awaited<ReturnType<typeof createCurrentProfile>>>
+    export type CreateCurrentProfileMutationBody = BodyType<ProfileSetupInput>
+    export type CreateCurrentProfileMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create the signed-in user's consultant or client profile
+ */
+export const useCreateCurrentProfile = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCurrentProfile>>, TError,{data: BodyType<ProfileSetupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCurrentProfile>>,
+        TError,
+        {data: BodyType<ProfileSetupInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCurrentProfileMutationOptions(options));
+    }
+
+export const getListDemoAccountsUrl = () => {
+
+
+
+
+  return `/api/demo-accounts`
+}
+
+/**
+ * @summary Ensure development demo accounts exist
+ */
+export const listDemoAccounts = async ( options?: Parameters<typeof customFetch>[1]): Promise<DemoAccounts> => {
+
+  return customFetch<DemoAccounts>(getListDemoAccountsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDemoAccountsQueryKey = () => {
+    return [
+    `/api/demo-accounts`
+    ] as const;
+    }
+
+
+export const getListDemoAccountsQueryOptions = <TData = Awaited<ReturnType<typeof listDemoAccounts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDemoAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDemoAccountsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDemoAccounts>>> = ({ signal }) => listDemoAccounts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDemoAccounts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDemoAccountsQueryResult = NonNullable<Awaited<ReturnType<typeof listDemoAccounts>>>
+export type ListDemoAccountsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Ensure development demo accounts exist
+ */
+
+export function useListDemoAccounts<TData = Awaited<ReturnType<typeof listDemoAccounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDemoAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDemoAccountsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -890,12 +1120,84 @@ export const useUpdateProject = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProjectMutationOptions(options));
     }
 
+export const getHireConsultantUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/${id}/hire`
+}
+
+/**
+ * @summary Hire a consultant for a client project
+ */
+export const hireConsultant = async (id: number,
+    hireInput: HireInput, options?: Parameters<typeof customFetch>[1]): Promise<HireResponse> => {
+
+  return customFetch<HireResponse>(getHireConsultantUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(hireInput)
+  }
+);}
+
+
+
+
+
+export const getHireConsultantMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof hireConsultant>>, TError,{id: number;data: BodyType<HireInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof hireConsultant>>, TError,{id: number;data: BodyType<HireInput>}, TContext> => {
+
+const mutationKey = ['hireConsultant'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof hireConsultant>>, {id: number;data: BodyType<HireInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  hireConsultant(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HireConsultantMutationResult = NonNullable<Awaited<ReturnType<typeof hireConsultant>>>
+    export type HireConsultantMutationBody = BodyType<HireInput>
+    export type HireConsultantMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Hire a consultant for a client project
+ */
+export const useHireConsultant = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof hireConsultant>>, TError,{id: number;data: BodyType<HireInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof hireConsultant>>,
+        TError,
+        {id: number;data: BodyType<HireInput>},
+        TContext
+      > => {
+      return useMutation(getHireConsultantMutationOptions(options));
+    }
+
 export const getDeleteProjectUrl = (id: number,) => {
 
 
 
 
-  return `/api/projects/${id}`
+  return `/api/projects/${id}/hire`
 }
 
 /**

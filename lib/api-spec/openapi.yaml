@@ -20,6 +20,8 @@ tags:
     description: Client portal operations
   - name: projects
     description: Client project operations
+  - name: auth
+    description: Signed-in workspace and demo account operations
 paths:
   /healthz:
     get:
@@ -34,6 +36,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /me:
+    get:
+      operationId: getCurrentProfile
+      tags: [auth]
+      summary: Get the signed-in user's workspace profile
+      responses:
+        "200":
+          description: Current workspace profile, or an empty profile before onboarding
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentProfile"
+        "401":
+          description: Sign-in required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/role:
+    post:
+      operationId: createCurrentProfile
+      tags: [auth]
+      summary: Create the signed-in user's consultant or client profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileSetupInput"
+      responses:
+        "201":
+          description: Created workspace profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentProfile"
+        "400":
+          description: Invalid setup details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /demo-accounts:
+    get:
+      operationId: listDemoAccounts
+      tags: [auth]
+      summary: Ensure development demo accounts exist
+      responses:
+        "200":
+          description: Demo account credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemoAccounts"
   /consultants:
     get:
       operationId: listConsultants
@@ -273,6 +329,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /projects/{id}/hire:
+    post:
+      operationId: hireConsultant
+      tags: [projects]
+      summary: Hire a consultant for a client project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HireInput"
+      responses:
+        "201":
+          description: Created engagement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HireResponse"
+        "400":
+          description: Invalid hire request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project or consultant not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       operationId: deleteProject
       tags: [projects]
@@ -338,6 +430,75 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
+    CurrentProfile:
+      type: object
+      properties:
+        role:
+          type: ["string", "null"]
+          enum: [consultant, client, null]
+        profile:
+          oneOf:
+            - $ref: "#/components/schemas/Consultant"
+            - $ref: "#/components/schemas/Client"
+            - type: "null"
+      required: [role, profile]
+    ProfileSetupInput:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [consultant, client]
+        name:
+          type: string
+          minLength: 1
+        title:
+          type: string
+        hourlyRate:
+          type: number
+          minimum: 0
+        company:
+          type: string
+        industry:
+          type: string
+        bio:
+          type: string
+      required: [role, name]
+    DemoAccount:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [consultant, client]
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [role, email, password]
+    DemoAccounts:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemoAccount"
+      required: [accounts]
+    HireInput:
+      type: object
+      properties:
+        consultantId:
+          type: integer
+          minimum: 1
+      required: [consultantId]
+    HireResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        engagement:
+          type: object
+          additionalProperties: true
+      required: [message, engagement]
     HealthStatus:
       type: object
       properties:

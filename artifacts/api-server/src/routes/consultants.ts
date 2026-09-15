@@ -18,6 +18,7 @@ import {
   type Engagement,
 } from "@workspace/db";
 import { ensureClientSeedData } from "./clients";
+import { getUserId, requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
 let seedPromise: Promise<void> | null = null;
@@ -208,7 +209,7 @@ router.get("/consultants", async (req, res) => {
   }
 });
 
-router.post("/consultants", async (req, res) => {
+router.post("/consultants", requireAuth, async (req, res) => {
   try {
     const body = CreateConsultantBody.parse(req.body);
     const isDeployed = body.availabilityStatus === "deployed";
@@ -226,6 +227,7 @@ router.post("/consultants", async (req, res) => {
         .insert(consultantsTable)
         .values({
           name: body.name.trim(),
+          ownerId: getUserId(req),
           title: body.title.trim(),
           skills: body.skills.map((skill) => skill.trim()).filter(Boolean),
           serviceOffers: (body.serviceOffers ?? []).map((service) => service.trim()).filter(Boolean),
@@ -258,12 +260,12 @@ router.post("/consultants", async (req, res) => {
   }
 });
 
-router.patch("/consultants/:id", async (req, res) => {
+router.patch("/consultants/:id", requireAuth, async (req, res) => {
   try {
     const { id } = UpdateConsultantParams.parse(req.params);
     const body = UpdateConsultantBody.parse(req.body);
     const currentRows = await getRosterRecords();
-    const current = currentRows.find((row) => row.consultant.id === id);
+    const current = currentRows.find((row) => row.consultant.id === id && row.consultant.ownerId === getUserId(req));
     if (!current) return res.status(404).json({ error: "That consultant no longer exists." });
 
     const nextStatus = body.availabilityStatus ?? current.consultant.availabilityStatus;
@@ -324,12 +326,12 @@ router.patch("/consultants/:id", async (req, res) => {
   }
 });
 
-router.delete("/consultants/:id", async (req, res) => {
+router.delete("/consultants/:id", requireAuth, async (req, res) => {
   try {
     const { id } = DeleteConsultantParams.parse(req.params);
     const deleted = await db
       .delete(consultantsTable)
-      .where(eq(consultantsTable.id, id))
+      .where(and(eq(consultantsTable.id, id), eq(consultantsTable.ownerId, getUserId(req)!)))
       .returning({ id: consultantsTable.id });
     if (!deleted.length) return res.status(404).json({ error: "That consultant no longer exists." });
     return res.status(204).send();

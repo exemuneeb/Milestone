@@ -3,14 +3,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BriefcaseBusiness, CirclePlus, Clock3, Edit3, Star, UsersRound } from "lucide-react";
 import {
   getListClientsQueryKey,
-  getListConsultantsQueryKey,
-  useCreateConsultant,
   useListClients,
-  useListConsultants,
   useUpdateConsultant,
 } from "@workspace/api-client-react";
 import type { Client, Consultant, ConsultantInput } from "@workspace/api-client-react";
 import { ConsultantForm } from "@/components/consultant-form";
+import { currentProfileQueryKey, useCurrentProfile } from "@/lib/auth";
 
 function formatDate(date?: string | null) {
   if (!date) return "Open ended";
@@ -33,27 +31,18 @@ function PortalMetric({ label, value, detail, accent }: { label: string; value: 
 
 export default function ConsultantPortal() {
   const queryClient = useQueryClient();
-  const roster = useListConsultants();
+  const currentProfile = useCurrentProfile();
   const clients = useListClients();
-  const create = useCreateConsultant();
   const update = useUpdateConsultant();
-  const consultants = roster.data ?? [];
   const clientList = clients.data ?? [];
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Consultant | null>(null);
   const [notice, setNotice] = useState("");
-
-  useEffect(() => {
-    if (selectedId && consultants.some((consultant) => consultant.id === selectedId)) return;
-    if (consultants[0]) setSelectedId(consultants[0].id);
-  }, [consultants, selectedId]);
-
-  const selected = consultants.find((consultant) => consultant.id === selectedId) ?? consultants[0] ?? null;
-  const ongoing = useMemo(() => consultants.filter((consultant) => consultant.engagement), [consultants]);
+  const selected = currentProfile.data?.role === "consultant" ? currentProfile.data.profile as Consultant : null;
+  const ongoing = useMemo(() => selected?.engagement ? [selected] : [], [selected]);
 
   const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: getListConsultantsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: currentProfileQueryKey });
     queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
   };
 
@@ -73,16 +62,6 @@ export default function ConsultantPortal() {
         },
         onError: () => showNotice("Could not update this profile"),
       });
-    } else {
-      create.mutate({ data }, {
-        onSuccess: (created) => {
-          refresh();
-          setSelectedId(created.id);
-          setFormOpen(false);
-          showNotice("Your consultant profile is ready");
-        },
-        onError: () => showNotice("Could not create this profile"),
-      });
     }
   };
 
@@ -94,11 +73,11 @@ export default function ConsultantPortal() {
           <h1 className="font-display text-[clamp(2.1rem,4vw,3.3rem)] font-bold leading-[.98] tracking-[-0.07em]">Make your work<br /><span className="text-muted-foreground">easy to find.</span></h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">Keep your profile current, show the services you offer, and stay close to the client work that fits your next move.</p>
         </div>
-        <button onClick={() => { setEditing(null); setFormOpen(true); }} data-testid="button-consultant-profile" className="button-primary self-start sm:self-auto"><CirclePlus size={17} /> Enter your profile</button>
+        <button onClick={() => { setEditing(selected); setFormOpen(true); }} data-testid="button-consultant-profile" className="button-primary self-start sm:self-auto"><Edit3 size={17} /> Edit your profile</button>
       </div>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <PortalMetric label="Profiles" value={roster.isLoading ? "—" : consultants.length} detail="consultants in the bench" accent="bg-primary" />
+        <PortalMetric label="Profiles" value={selected ? 1 : "—"} detail="your consultant profile" accent="bg-primary" />
         <PortalMetric label="Live projects" value={ongoing.length} detail="ongoing engagements" accent="bg-accent" />
         <PortalMetric label="Service offers" value={selected?.serviceOffers.length ?? "—"} detail="in your selected profile" accent="bg-chart-3" />
         <PortalMetric label="Top clients" value={clientList.length} detail="rated client partners" accent="bg-chart-5" />
@@ -116,10 +95,7 @@ export default function ConsultantPortal() {
                   <p className="mt-1 text-sm text-muted-foreground">{selected.title} · ${selected.hourlyRate}/hr</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <select aria-label="Choose consultant profile" value={selected.id} onChange={(event) => setSelectedId(Number(event.target.value))} className="field-input w-auto max-w-[180px]">
-                  {consultants.map((consultant) => <option key={consultant.id} value={consultant.id}>{consultant.name}</option>)}
-                </select>
+               <div className="flex items-center gap-2">
                 <button onClick={() => { setEditing(selected); setFormOpen(true); }} className="icon-button" title="Edit profile"><Edit3 size={16} /></button>
               </div>
             </div>
@@ -155,9 +131,9 @@ export default function ConsultantPortal() {
         </div>
       </section>
 
-      {!selected && !roster.isLoading && <div className="surface-grid rounded-xl border border-border px-5 py-14 text-center"><UsersRound className="mx-auto text-muted-foreground" size={24} /><h2 className="mt-3 font-display text-xl font-bold">Your profile starts here</h2><p className="mt-1 text-sm text-muted-foreground">Add your consultant information to become searchable.</p></div>}
+       {!selected && !currentProfile.isLoading && <div className="surface-grid rounded-xl border border-border px-5 py-14 text-center"><UsersRound className="mx-auto text-muted-foreground" size={24} /><h2 className="mt-3 font-display text-xl font-bold">Your profile starts here</h2><p className="mt-1 text-sm text-muted-foreground">Complete account setup to become searchable.</p></div>}
       {notice && <div className="fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-foreground px-4 py-3 text-xs font-semibold text-background shadow-xl">{notice}</div>}
-      <ConsultantForm open={formOpen} consultant={editing} pending={create.isPending || update.isPending} onClose={() => { setFormOpen(false); setEditing(null); }} onSubmit={saveConsultant} />
+       <ConsultantForm open={formOpen} consultant={editing} pending={update.isPending} onClose={() => { setFormOpen(false); setEditing(null); }} onSubmit={saveConsultant} />
     </div>
   );
 }

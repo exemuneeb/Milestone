@@ -18,6 +18,101 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * @summary Get the signed-in user's workspace profile
+ */
+export const GetCurrentProfileResponse = zod.object({
+  "role": zod.union([zod.literal('consultant'),zod.literal('client'),zod.literal(null)]).nullable(),
+  "profile": zod.union([zod.object({
+  "id": zod.int(),
+  "name": zod.string(),
+  "title": zod.string(),
+  "skills": zod.array(zod.string()),
+  "serviceOffers": zod.array(zod.string()),
+  "hourlyRate": zod.number(),
+  "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']),
+  "engagement": zod.object({
+  "id": zod.int(),
+  "projectName": zod.string(),
+  "startDate": zod.coerce.date(),
+  "endDate": zod.coerce.date()
+}).nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),zod.object({
+  "id": zod.int(),
+  "name": zod.string(),
+  "company": zod.string(),
+  "industry": zod.string(),
+  "bio": zod.string(),
+  "rating": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),zod.null()])
+})
+
+
+/**
+ * @summary Create the signed-in user's consultant or client profile
+ */
+
+export const createCurrentProfileBodyHourlyRateMin = 0;
+
+
+
+export const CreateCurrentProfileBody = zod.object({
+  "role": zod.enum(['consultant', 'client']),
+  "name": zod.string().min(1),
+  "title": zod.string().optional(),
+  "hourlyRate": zod.number().min(createCurrentProfileBodyHourlyRateMin).optional(),
+  "company": zod.string().optional(),
+  "industry": zod.string().optional(),
+  "bio": zod.string().optional()
+})
+
+export const CreateCurrentProfileResponse = zod.object({
+  "role": zod.union([zod.literal('consultant'),zod.literal('client'),zod.literal(null)]).nullable(),
+  "profile": zod.union([zod.object({
+  "id": zod.int(),
+  "name": zod.string(),
+  "title": zod.string(),
+  "skills": zod.array(zod.string()),
+  "serviceOffers": zod.array(zod.string()),
+  "hourlyRate": zod.number(),
+  "availabilityStatus": zod.enum(['available', 'deployed', 'unavailable']),
+  "engagement": zod.object({
+  "id": zod.int(),
+  "projectName": zod.string(),
+  "startDate": zod.coerce.date(),
+  "endDate": zod.coerce.date()
+}).nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),zod.object({
+  "id": zod.int(),
+  "name": zod.string(),
+  "company": zod.string(),
+  "industry": zod.string(),
+  "bio": zod.string(),
+  "rating": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),zod.null()])
+})
+
+
+/**
+ * @summary Ensure development demo accounts exist
+ */
+export const ListDemoAccountsResponse = zod.object({
+  "accounts": zod.array(zod.object({
+  "role": zod.enum(['consultant', 'client']),
+  "email": zod.email(),
+  "password": zod.string()
+}))
+})
+
+
+/**
  * Returns the consultant roster with active engagement details.
  * @summary List consultants
  */
@@ -308,6 +403,26 @@ export const UpdateProjectResponse = zod.object({
   "endDate": zod.coerce.date().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Hire a consultant for a client project
+ */
+export const HireConsultantParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+
+
+
+export const HireConsultantBody = zod.object({
+  "consultantId": zod.int().min(1)
+})
+
+export const HireConsultantResponse = zod.object({
+  "message": zod.string(),
+  "engagement": zod.record(zod.string(), zod.unknown())
 })
 
 

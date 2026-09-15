@@ -31,7 +31,8 @@ BenchBoard helps small consulting and staffing firms track consultant availabili
 ## Architecture decisions
 
 - Consultant availability and the current engagement are exposed as one UI model, while persistence stays normalized across two tables.
-- Consultant and client portals are separate routes without authentication in the MVP; each portal uses a selected seeded profile until account ownership is added.
+- Clerk authenticates consultants and clients; each signed-in account owns one workspace profile and is routed to onboarding, then to its role-specific portal.
+- Client owners can create projects, run AI matching, browse the bench, and hire consultants into a project; demo accounts are provisioned through the public development landing page.
 - Client projects are the source briefs for AI consultant search, while consultant service offers are stored separately from core skills.
 - The matching flow uses Groq for requirement extraction and explanation, with a local roster comparison step between them.
 - Deployed status requires engagement context; status changes without an engagement open the edit flow instead of failing silently.
@@ -42,6 +43,7 @@ BenchBoard helps small consulting and staffing firms track consultant availabili
 - Availability dashboard with roster search, status filtering, 14-day engagement alerts, and consultant CRUD.
 - Consultant portal for profile details, service offers, ongoing projects, and top-rated clients.
 - Client portal for client profiles, project CRUD, and AI consultant search from saved or new project briefs.
+- Manual consultant hiring from AI recommendations or the browsable bench updates the consultant's availability and creates an engagement.
 - AI match studio that extracts skills, seniority, and domain from a role brief, compares the live roster, and returns a ranked shortlist with grounded reasons.
 
 ## User preferences

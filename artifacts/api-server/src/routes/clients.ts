@@ -9,7 +9,8 @@ import {
 } from "@workspace/api-zod";
 import { db } from "@workspace/db";
 import { clientsTable, projectsTable } from "@workspace/db";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, and } from "drizzle-orm";
+import { getUserId, requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
 let seedPromise: Promise<void> | null = null;
@@ -107,13 +108,14 @@ router.get("/clients", async (req, res) => {
   }
 });
 
-router.post("/clients", async (req, res) => {
+router.post("/clients", requireAuth, async (req, res) => {
   try {
     const body = CreateClientBody.parse(req.body);
     const [client] = await db
       .insert(clientsTable)
       .values({
         name: body.name.trim(),
+        ownerId: getUserId(req),
         company: body.company.trim(),
         industry: body.industry.trim(),
         bio: body.bio?.trim() ?? "",
@@ -129,7 +131,7 @@ router.post("/clients", async (req, res) => {
   }
 });
 
-router.patch("/clients/:id", async (req, res) => {
+router.patch("/clients/:id", requireAuth, async (req, res) => {
   try {
     const { id } = UpdateClientParams.parse(req.params);
     const body = UpdateClientBody.parse(req.body);
@@ -141,7 +143,7 @@ router.patch("/clients/:id", async (req, res) => {
         ...(body.industry !== undefined ? { industry: body.industry.trim() } : {}),
         ...(body.bio !== undefined ? { bio: body.bio.trim() } : {}),
       })
-      .where(eq(clientsTable.id, id))
+      .where(and(eq(clientsTable.id, id), eq(clientsTable.ownerId, getUserId(req)!)))
       .returning();
     if (!client) return res.status(404).json({ error: "That client profile no longer exists." });
     return res.json(UpdateClientResponse.parse(client));

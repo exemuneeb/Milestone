@@ -5,9 +5,16 @@
  * BenchBoard consultant availability and matching API
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
+/**
+ * @nullable
+ */
+export type CurrentProfileRole = typeof CurrentProfileRole[keyof typeof CurrentProfileRole] | null;
+
+
+export const CurrentProfileRole = {
+  consultant: 'consultant',
+  client: 'client',
+} as const;
 
 export type AvailabilityStatus = typeof AvailabilityStatus[keyof typeof AvailabilityStatus];
 
@@ -37,6 +44,77 @@ export interface Consultant {
   engagement: Engagement | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Client {
+  id: number;
+  name: string;
+  company: string;
+  industry: string;
+  bio: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CurrentProfile {
+  /** @nullable */
+  role: CurrentProfileRole;
+  profile: Consultant | Client | null;
+}
+
+export type ProfileSetupInputRole = typeof ProfileSetupInputRole[keyof typeof ProfileSetupInputRole];
+
+
+export const ProfileSetupInputRole = {
+  consultant: 'consultant',
+  client: 'client',
+} as const;
+
+export interface ProfileSetupInput {
+  role: ProfileSetupInputRole;
+  /** @minLength 1 */
+  name: string;
+  title?: string;
+  /** @minimum 0 */
+  hourlyRate?: number;
+  company?: string;
+  industry?: string;
+  bio?: string;
+}
+
+export type DemoAccountRole = typeof DemoAccountRole[keyof typeof DemoAccountRole];
+
+
+export const DemoAccountRole = {
+  consultant: 'consultant',
+  client: 'client',
+} as const;
+
+export interface DemoAccount {
+  role: DemoAccountRole;
+  email: string;
+  password: string;
+}
+
+export interface DemoAccounts {
+  accounts: DemoAccount[];
+}
+
+export interface HireInput {
+  /** @minimum 1 */
+  consultantId: number;
+}
+
+export type HireResponseEngagement = { [key: string]: unknown };
+
+export interface HireResponse {
+  message: string;
+  engagement: HireResponseEngagement;
+}
+
+export interface HealthStatus {
+  status: string;
 }
 
 export interface ConsultantInput {
@@ -75,17 +153,6 @@ export interface ConsultantUpdate {
   engagementStartDate?: string | null;
   /** @nullable */
   engagementEndDate?: string | null;
-}
-
-export interface Client {
-  id: number;
-  name: string;
-  company: string;
-  industry: string;
-  bio: string;
-  rating: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ClientInput {

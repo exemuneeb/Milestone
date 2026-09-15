@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, BriefcaseBusiness, CircleAlert, CirclePlus, Edit3, FolderKanban, LoaderCircle, Search, Sparkles, Star, Trash2, UsersRound } from "lucide-react";
 import {
-  getListClientsQueryKey,
   getListProjectsQueryKey,
-  useCreateClient,
   useCreateProject,
   useDeleteProject,
-  useListClients,
+  useListConsultants,
   useListProjects,
   useMatchConsultants,
   useUpdateClient,
@@ -16,6 +14,7 @@ import {
 import type { Client, ClientInput, Project, ProjectInput, ProjectStatus } from "@workspace/api-client-react";
 import { ClientForm } from "@/components/client-form";
 import { ProjectForm } from "@/components/project-form";
+import { currentProfileQueryKey, useCurrentProfile } from "@/lib/auth";
 
 function formatDate(date?: string | null) {
   if (!date) return "Not set";
@@ -35,24 +34,18 @@ function statusClass(status: ProjectStatus) {
 
 export default function ClientPortal() {
   const queryClient = useQueryClient();
-  const clientsQuery = useListClients();
-  const clientList = clientsQuery.data ?? [];
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const currentProfile = useCurrentProfile();
+  const consultantsQuery = useListConsultants();
+  const consultants = consultantsQuery.data ?? [];
   const [profileOpen, setProfileOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [projectOpen, setProjectOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [notice, setNotice] = useState("");
-  const [brief, setBrief] = useState("");
   const [searchText, setSearchText] = useState("");
-
-  useEffect(() => {
-    if (selectedClientId && clientList.some((client) => client.id === selectedClientId)) return;
-    if (clientList[0]) setSelectedClientId(clientList[0].id);
-  }, [clientList, selectedClientId]);
-
-  const activeClient = clientList.find((client) => client.id === selectedClientId) ?? clientList[0] ?? null;
+  const [hiringId, setHiringId] = useState<number | null>(null);
+  const activeClient = currentProfile.data?.role === "client" ? currentProfile.data.profile as Client : null;
   const projectsQuery = useListProjects(
     { clientId: activeClient?.id ?? 0 },
     {
@@ -63,7 +56,6 @@ export default function ClientPortal() {
     },
   );
   const projects = projectsQuery.data ?? [];
-  const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
@@ -76,7 +68,6 @@ export default function ClientPortal() {
     window.setTimeout(() => setNotice(""), 3200);
   };
 
-  const refreshClients = () => queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
   const refreshProjects = () => {
     if (activeClient) queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey({ clientId: activeClient.id }) });
   };
@@ -85,22 +76,12 @@ export default function ClientPortal() {
     if (editingClient) {
       updateClient.mutate({ id: editingClient.id, data }, {
         onSuccess: () => {
-          refreshClients();
+          queryClient.invalidateQueries({ queryKey: currentProfileQueryKey });
           setProfileOpen(false);
           setEditingClient(null);
           showNotice("Client profile updated");
         },
         onError: () => showNotice("Could not update this profile"),
-      });
-    } else {
-      createClient.mutate({ data }, {
-        onSuccess: (created) => {
-          refreshClients();
-          setSelectedClientId(created.id);
-          setProfileOpen(false);
-          showNotice("Client profile created");
-        },
-        onError: () => showNotice("Could not create this profile"),
       });
     }
   };
@@ -146,6 +127,31 @@ export default function ClientPortal() {
     match.mutate({ data: { jobDescription: searchText.trim() } });
   };
 
+  const hireConsultant = async (consultantId: number) => {
+    const project = projects[0];
+    if (!project) {
+      showNotice("Create a project before hiring a consultant");
+      return;
+    }
+    setHiringId(consultantId);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/hire`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ consultantId }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "Unable to hire consultant.");
+      await consultantsQuery.refetch();
+      showNotice("Consultant hired for your project");
+    } catch (error) {
+      showNotice(error instanceof Error ? error.message : "Could not hire this consultant");
+    } finally {
+      setHiringId(null);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -155,7 +161,7 @@ export default function ClientPortal() {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">Manage your client profile and projects, then use AI search to find consultants who can move the work forward.</p>
         </div>
         <div className="flex flex-wrap gap-2 self-start sm:self-auto">
-          <button onClick={() => { setEditingClient(null); setProfileOpen(true); }} data-testid="button-client-profile" className="button-secondary"><UsersRound size={15} /> Add client profile</button>
+           <button onClick={() => { setEditingClient(activeClient); setProfileOpen(true); }} data-testid="button-client-profile" className="button-secondary"><UsersRound size={15} /> Edit client profile</button>
           <button onClick={() => { setEditingProject(null); setProjectOpen(true); }} disabled={!activeClient} data-testid="button-add-project" className="button-primary"><CirclePlus size={15} /> Add project</button>
         </div>
       </div>
@@ -171,9 +177,6 @@ export default function ClientPortal() {
                   <p className="mt-1 text-sm text-muted-foreground">{activeClient.name} · {activeClient.industry}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select aria-label="Choose client profile" value={activeClient.id} onChange={(event) => setSelectedClientId(Number(event.target.value))} className="field-input w-auto max-w-[190px]">
-                    {clientList.map((client) => <option key={client.id} value={client.id}>{client.company}</option>)}
-                  </select>
                   <button onClick={() => { setEditingClient(activeClient); setProfileOpen(true); }} className="icon-button" title="Edit client profile"><Edit3 size={16} /></button>
                 </div>
               </div>
@@ -199,12 +202,17 @@ export default function ClientPortal() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div className="mb-2 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.16em] text-accent-foreground"><Sparkles size={13} /> AI consultant search</div><h2 className="font-display text-2xl font-bold tracking-[-0.04em]">Find the people for this project.</h2><p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">Search from your saved project or paste a fresh brief. BenchBoard extracts the signal, reads the live consultant profiles, and explains the recommendations.</p></div>{projects.length > 0 && <select aria-label="Use saved project" onChange={(event) => { const project = projects.find((item) => item.id === Number(event.target.value)); if (project) setSearchText(project.description); }} className="field-input w-full sm:w-56"><option value="">Use a saved project...</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}</div>
         <form onSubmit={submitSearch} className="mt-5"><textarea data-testid="textarea-client-search" value={searchText} onChange={(event) => setSearchText(event.target.value)} className="min-h-32 w-full resize-y rounded-xl border border-input bg-background p-4 text-sm leading-relaxed outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/15" placeholder="Describe the project outcome, context, and capabilities you need..." /><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><span className="text-[11px] text-muted-foreground">{searchText.length > 0 ? `${searchText.length} characters` : "Minimum 20 characters"}</span><button type="submit" disabled={match.isPending || searchText.trim().length < 20} data-testid="button-client-search" className="button-primary self-start sm:self-auto">{match.isPending ? <><LoaderCircle size={15} className="animate-spin" /> Searching consultants</> : <><Search size={15} /> Find consultants</>}</button></div></form>
         {match.isError && <div className="mt-5 flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive"><CircleAlert size={16} className="mt-0.5 shrink-0" /><div><strong>Search failed.</strong><p className="mt-1 text-destructive/75">Check the brief and try again.</p></div></div>}
-        {match.data && <div className="mt-6 space-y-3 border-t border-border/70 pt-5"><div className="flex items-end justify-between"><div><div className="field-label">Recommended consultants</div><p className="mt-1 text-xs text-muted-foreground">{match.data.matches.length} profiles compared against your brief.</p></div><ArrowRight size={17} className="text-primary" /></div>{match.data.matches.slice(0, 5).map((item) => <article key={`${item.rank}-${item.consultant.id}`} className="rounded-lg border border-border/80 bg-secondary/20 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start"><div className="flex items-start gap-3"><div className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 font-mono-ui text-xs font-semibold text-primary">0{item.rank}</div><div><h3 className="text-sm font-semibold">{item.consultant.name}</h3><p className="text-[11px] text-muted-foreground">{item.consultant.title} · ${item.consultant.hourlyRate}/hr</p></div></div><div className="ml-auto font-mono-ui text-lg font-medium text-primary">{Math.round(item.score * 100)}%</div></div><div className="mt-3 grid gap-3 border-t border-border/70 pt-3 sm:grid-cols-[.8fr_1.6fr]"><div><div className="field-label">Fit signals</div><div className="mt-1 flex flex-wrap gap-1.5">{item.matchingSkills.length ? item.matchingSkills.map((skill) => <span key={skill} className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">{skill}</span>) : <span className="text-[11px] text-muted-foreground">Profile overlap is limited</span>}</div></div><div><div className="field-label">Why this fit</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.reason}</p></div></div></article>)}</div>}
+       {match.data && <div className="mt-6 space-y-3 border-t border-border/70 pt-5"><div className="flex items-end justify-between"><div><div className="field-label">Recommended consultants</div><p className="mt-1 text-xs text-muted-foreground">{match.data.matches.length} profiles compared against your brief.</p></div><ArrowRight size={17} className="text-primary" /></div>{match.data.matches.slice(0, 5).map((item) => <article key={`${item.rank}-${item.consultant.id}`} className="rounded-lg border border-border/80 bg-secondary/20 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start"><div className="flex items-start gap-3"><div className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 font-mono-ui text-xs font-semibold text-primary">0{item.rank}</div><div><h3 className="text-sm font-semibold">{item.consultant.name}</h3><p className="text-[11px] text-muted-foreground">{item.consultant.title} · ${item.consultant.hourlyRate}/hr</p></div></div><div className="ml-auto flex items-center gap-3"><div className="font-mono-ui text-lg font-medium text-primary">{Math.round(item.score * 100)}%</div><button onClick={() => hireConsultant(item.consultant.id)} disabled={hiringId !== null} className="button-primary px-3 py-2 text-[11px]">{hiringId === item.consultant.id ? "Hiring..." : "Hire"}</button></div></div><div className="mt-3 grid gap-3 border-t border-border/70 pt-3 sm:grid-cols-[.8fr_1.6fr]"><div><div className="field-label">Fit signals</div><div className="mt-1 flex flex-wrap gap-1.5">{item.matchingSkills.length ? item.matchingSkills.map((skill) => <span key={skill} className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">{skill}</span>) : <span className="text-[11px] text-muted-foreground">Profile overlap is limited</span>}</div></div><div><div className="field-label">Why this fit</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.reason}</p></div></div></article>)}</div>}
       </section>
+
+       <section className="rounded-xl border border-border bg-card p-5 shadow-[0_1px_0_hsl(var(--foreground)/.04)] sm:p-6">
+         <div className="flex items-end justify-between gap-4"><div><div className="mb-2 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.16em] text-primary"><UsersRound size={13} /> Manual browse</div><h2 className="font-display text-2xl font-bold tracking-[-0.04em]">Hire from the bench.</h2><p className="mt-1 text-xs text-muted-foreground">Review every available profile when you already know who you want to work with.</p></div><span className="rounded-full bg-secondary px-3 py-1 font-mono-ui text-[10px] text-muted-foreground">{consultants.length} profiles</span></div>
+         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{consultants.map((consultant) => <article key={consultant.id} className="rounded-lg border border-border/80 bg-secondary/20 p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-semibold">{consultant.name}</h3><p className="mt-1 text-[11px] text-muted-foreground">{consultant.title}</p></div><span className={`rounded-md px-2 py-1 text-[10px] font-semibold ${consultant.availabilityStatus === "available" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{consultant.availabilityStatus}</span></div><div className="mt-3 flex flex-wrap gap-1.5">{[...consultant.serviceOffers, ...consultant.skills].slice(0, 4).map((skill) => <span key={skill} className="rounded-md bg-background px-2 py-1 text-[10px] text-muted-foreground">{skill}</span>)}</div><button onClick={() => hireConsultant(consultant.id)} disabled={hiringId !== null || consultant.availabilityStatus !== "available"} className="button-secondary mt-4 w-full justify-center text-xs">{hiringId === consultant.id ? "Hiring..." : consultant.availabilityStatus === "available" ? "Hire for this project" : "Currently unavailable"}</button></article>)}</div>
+       </section>
 
       {notice && <div className="fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-foreground px-4 py-3 text-xs font-semibold text-background shadow-xl">{notice}</div>}
       {deletingProject && <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/35 p-5 backdrop-blur-[2px]"><div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl"><div className="grid size-10 place-items-center rounded-xl bg-destructive/10 text-destructive"><Trash2 size={18} /></div><h2 className="mt-4 font-display text-xl font-bold tracking-[-0.04em]">Remove {deletingProject.name}?</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">This removes the saved project brief and its details from your client workspace.</p><div className="mt-6 flex gap-3"><button onClick={() => setDeletingProject(null)} className="button-secondary flex-1">Keep project</button><button onClick={confirmDeleteProject} disabled={deleteProject.isPending} className="button-danger flex-1">{deleteProject.isPending ? "Removing..." : "Remove"}</button></div></div></div>}
-      <ClientForm open={profileOpen} client={editingClient} pending={createClient.isPending || updateClient.isPending} onClose={() => { setProfileOpen(false); setEditingClient(null); }} onSubmit={saveClient} />
+       <ClientForm open={profileOpen} client={editingClient} pending={updateClient.isPending} onClose={() => { setProfileOpen(false); setEditingClient(null); }} onSubmit={saveClient} />
       {activeClient && <ProjectForm open={projectOpen} clientId={activeClient.id} project={editingProject} pending={createProject.isPending || updateProject.isPending} onClose={() => { setProjectOpen(false); setEditingProject(null); }} onSubmit={saveProject} />}
     </div>
   );

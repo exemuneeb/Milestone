@@ -1,1 +1,2 @@
 - [Groq model access](groq-model-access.md) — model IDs can be key-specific; verify a live supported model before relying on public docs.
+- [Clerk demo accounts](clerk-demo-accounts.md) — backend-created development users need conventionally valid public email domains.

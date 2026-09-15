@@ -1,5 +1,6 @@
 import { Activity, BrainCircuit, BriefcaseBusiness, ChevronRight, LayoutDashboard, Sparkles, UsersRound } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { useClerk, useUser } from '@clerk/react';
 import { useHealthCheck } from '@workspace/api-client-react';
 import type { ReactNode } from 'react';
 
@@ -8,7 +9,9 @@ type ShellProps = { children: ReactNode };
 export function Shell({ children }: ShellProps) {
   const [location] = useLocation();
   const health = useHealthCheck();
-  const isConsultant = location === '/' || location === '/availability';
+  const { signOut } = useClerk();
+  const { user } = useUser();
+  const isConsultant = location === '/consultant' || location === '/availability';
   const isClient = location === '/client' || location === '/match';
 
   return (
@@ -26,7 +29,7 @@ export function Shell({ children }: ShellProps) {
         <div className="px-4">
           <div className="mb-3 px-3 font-mono-ui text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/45">Workspace</div>
           <nav className="space-y-1">
-            <Link href="/" data-testid="link-consultant-portal" className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isConsultant ? 'bg-sidebar-accent text-sidebar-foreground' : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`}>
+            <Link href="/consultant" data-testid="link-consultant-portal" className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isConsultant ? 'bg-sidebar-accent text-sidebar-foreground' : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`}>
               <BriefcaseBusiness size={17} />
               <span className="font-medium">Consultant portal</span>
               <ChevronRight size={14} className={`ml-auto transition-transform ${isConsultant ? 'translate-x-0 opacity-80' : '-translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-60'}`} />
@@ -71,9 +74,9 @@ export function Shell({ children }: ShellProps) {
           </div>
           <div className="hidden text-xs text-muted-foreground lg:block">Tuesday, October 15, 2024 <span className="mx-2 text-border">/</span> Roster pulse</div>
           <div className="flex items-center gap-2">
-            <Link href="/" data-testid="mobile-link-consultant" className={`rounded-md px-2.5 py-1.5 text-xs font-semibold lg:hidden ${isConsultant ? 'bg-secondary text-foreground' : 'text-muted-foreground'}`}>Consultant</Link>
+            <Link href="/consultant" data-testid="mobile-link-consultant" className={`rounded-md px-2.5 py-1.5 text-xs font-semibold lg:hidden ${isConsultant ? 'bg-secondary text-foreground' : 'text-muted-foreground'}`}>Consultant</Link>
             <Link href="/client" data-testid="mobile-link-client" className={`rounded-md px-2.5 py-1.5 text-xs font-semibold lg:hidden ${isClient ? 'bg-secondary text-foreground' : 'text-muted-foreground'}`}>Client</Link>
-            <div className="ml-1 grid size-8 place-items-center rounded-full bg-secondary font-display text-xs font-bold text-secondary-foreground" title="Workspace owner">NS</div>
+            <button type="button" onClick={() => signOut({ redirectUrl: '/' })} className="ml-1 grid size-8 place-items-center rounded-full bg-secondary font-display text-xs font-bold text-secondary-foreground" title={`Sign out ${user?.fullName ?? ''}`}>{(user?.firstName?.[0] ?? 'B') + (user?.lastName?.[0] ?? '')}</button>
           </div>
         </header>
         <main className="mx-auto max-w-[1480px] px-5 py-7 sm:px-8 sm:py-9 lg:px-10">{children}</main>
